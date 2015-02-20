@@ -488,7 +488,5 @@ log(Msg, Args) ->
 
 -spec hash(iodata()) -> string().
 hash(Clause) ->
-  Bin = crypto:hash(md5, Clause),
-  List = binary_to_list(Bin),
-  Fun = fun(Num) -> string:right(integer_to_list(Num, 16), 2, $0) end,
-  lists:flatmap(Fun, List).
+  Num = erlang:phash2(Clause),
+  integer_to_list(Num).
