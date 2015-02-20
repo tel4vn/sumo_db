@@ -204,27 +204,51 @@ where_clause(Exprs, EscapeFun) ->
   where_clause(Exprs, EscapeFun, fun slot_question/1).
 
 -spec where_clause(sumo_internal:expression(), fun(), fun()) -> iodata().
-where_clause([], _EscapeFun, _SlotFun) ->
+where_clause(Exprs, EscapeFun, SlotFun) ->
+  check(),
+  Key =  {sumo_sql_builder,
+          where_clause,
+          [Exprs, EscapeFun, SlotFun]},
+  case ets:lookup(memoization, Key) of
+    None when None == [] orelse None == false ->
+      Result = where_clause_internal(Exprs, EscapeFun, SlotFun),
+      true = ets:insert_new(memoization, {Key, Result}),
+      Result;
+    [{_, Memoized}] ->
+      Memoized
+  end.
+
+check() ->
+  case ets:info(memoization) of
+    undefined ->
+      ets:new(memoization, [ordered_set, public, named_table,
+                      {write_concurrency,true},
+                      {read_concurrency,true}, compressed]);
+    _ -> ok
+  end.
+
+-spec where_clause_internal(sumo_internal:expression(), fun(), fun()) -> iodata().
+where_clause_internal([], _EscapeFun, _SlotFun) ->
   [];
-where_clause(Exprs, EscapeFun, SlotFun) when is_list(Exprs) ->
+where_clause_internal(Exprs, EscapeFun, SlotFun) when is_list(Exprs) ->
   Clauses = [where_clause(Expr, EscapeFun, SlotFun) || Expr <- Exprs],
   ["(", interpose(" AND ", Clauses), ")"];
-where_clause({'and', Exprs}, EscapeFun, SlotFun) ->
-  where_clause(Exprs, EscapeFun, SlotFun);
-where_clause({'or', Exprs}, EscapeFun, SlotFun) ->
-  Clauses = [where_clause(Expr, EscapeFun, SlotFun) || Expr <- Exprs],
+where_clause_internal({'and', Exprs}, EscapeFun, SlotFun) ->
+  where_clause_internal(Exprs, EscapeFun, SlotFun);
+where_clause_internal({'or', Exprs}, EscapeFun, SlotFun) ->
+  Clauses = [where_clause_internal(Expr, EscapeFun, SlotFun) || Expr <- Exprs],
   ["(", interpose(" OR ", Clauses), ")"];
-where_clause({'not', Expr}, EscapeFun, SlotFun) ->
-  [" NOT ", "(", where_clause(Expr, EscapeFun, SlotFun), ")"];
-where_clause({Name, Op, {'?', _} = Slot}, EscapeFun, SlotFun) ->
+where_clause_internal({'not', Expr}, EscapeFun, SlotFun) ->
+  [" NOT ", "(", where_clause_internal(Expr, EscapeFun, SlotFun), ")"];
+where_clause_internal({Name, Op, {'?', _} = Slot}, EscapeFun, SlotFun) ->
   [EscapeFun(Name), " ", operator_to_string(Op), SlotFun(Slot)];
-where_clause({Name1, Op, Name2}, EscapeFun, _SlotFun) ->
+where_clause_internal({Name1, Op, Name2}, EscapeFun, _SlotFun) ->
   [EscapeFun(Name1), " ", operator_to_string(Op), " ", escape(Name2)];
-where_clause({Name,  {'?', _} = Slot}, EscapeFun, SlotFun) ->
+where_clause_internal({Name,  {'?', _} = Slot}, EscapeFun, SlotFun) ->
   [EscapeFun(Name), " = ", SlotFun(Slot)];
-where_clause({Name, 'null'}, EscapeFun, _SlotFun) ->
+where_clause_internal({Name, 'null'}, EscapeFun, _SlotFun) ->
   [EscapeFun(Name), " IS NULL "];
-where_clause({Name, 'not_null'}, EscapeFun, _SlotFun) ->
+where_clause_internal({Name, 'not_null'}, EscapeFun, _SlotFun) ->
   [EscapeFun(Name), " IS NOT NULL "].
 
 -spec slot_question({'?', integer()}) -> string().
