@@ -205,27 +205,7 @@ where_clause(Exprs, EscapeFun) ->
 
 -spec where_clause(sumo_internal:expression(), fun(), fun()) -> iodata().
 where_clause(Exprs, EscapeFun, SlotFun) ->
-  check(),
-  Key =  {sumo_sql_builder,
-          where_clause,
-          [Exprs, EscapeFun, SlotFun]},
-  case ets:lookup(memoization, Key) of
-    None when None == [] orelse None == false ->
-      Result = where_clause_internal(Exprs, EscapeFun, SlotFun),
-      true = ets:insert_new(memoization, {Key, Result}),
-      Result;
-    [{_, Memoized}] ->
-      Memoized
-  end.
-
-check() ->
-  case ets:info(memoization) of
-    undefined ->
-      ets:new(memoization, [ordered_set, public, named_table,
-                      {write_concurrency,true},
-                      {read_concurrency,true}, compressed]);
-    _ -> ok
-  end.
+  memoize:call(fun where_clause_internal/3, [Exprs, EscapeFun, SlotFun]).
 
 -spec where_clause_internal(sumo_internal:expression(), fun(), fun()) -> iodata().
 where_clause_internal([], _EscapeFun, _SlotFun) ->

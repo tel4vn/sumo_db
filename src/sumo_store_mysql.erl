@@ -438,8 +438,11 @@ get_docs(DocName, Name, Args, State) ->
   end.
 
 build_docs(DocName, #result_packet{rows = Rows, field_list = Fields}) ->
-  FieldNames = [binary_to_atom(Field#field.name, utf8) || Field <- Fields],
+  FieldNames = memoize:call(fun field_names/1, [Fields]),
   [build_doc(sumo_internal:new_doc(DocName), FieldNames, Row) || Row <- Rows].
+
+field_names(Fields) ->
+  [binary_to_atom(Field#field.name, utf8) || Field <- Fields].
 
 build_doc(Doc, [], []) -> Doc;
 build_doc(Doc, [FieldName|FieldNames], [Value|Values]) ->

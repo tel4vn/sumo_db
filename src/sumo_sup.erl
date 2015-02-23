@@ -53,7 +53,10 @@ init([]) ->
     {one_for_one, 5, 10},
     [ sup(sumo_backend_sup)
     , sup(sumo_store_sup)
+    , worker(memoize)
     ]
-  }}.
+    }}.
 
 sup(I) -> {I, {I, start_link, []}, permanent, infinity, supervisor, [I]}.
+
+worker(I) -> {I, {I, start_link, []}, permanent, infinity, worker, [I]}.

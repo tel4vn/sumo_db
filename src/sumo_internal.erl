@@ -142,8 +142,8 @@ get_field(Name, Doc) ->
 
 %% @doc Sets a value in an sumo_doc.
 -spec set_field(sumo:field_name(), sumo:field_value(), doc()) -> doc().
-set_field(FieldName, Value, _Doc = #{fields := Fields, name := Name}) ->
-  new_doc(Name, maps:put(FieldName, Value, Fields)).
+set_field(FieldName, Value, Doc = #{fields := Fields}) ->
+  Doc#{fields => maps:put(FieldName, Value, Fields)}.
 
 %% @doc Returns name of field marked as ID for the given schema or doc name.
 -spec id_field_name(sumo:schema_name()) -> sumo:field_name().
