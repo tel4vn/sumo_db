@@ -61,7 +61,7 @@ create_ets() ->
 
 -spec handle_call(term(), term(), term()) -> term().
 handle_call({Fun, Args}, _From, State) ->
-  Key = hash(Fun, Args),
+  Key = erlang:phash2({Fun, Args}),
   Value = case ets:lookup(?MODULE, Key) of
             None when None == [] orelse None == false ->
               Result = apply(Fun, Args),
@@ -87,10 +87,3 @@ terminate(_Reason, _State) -> ok.
 
 -spec code_change(term(), term(), term()) -> term().
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
-
-%% @doc Create a hash based on a mfa and it's arguments.
-hash(Fun, Args) ->
-  {module, Module} = erlang:fun_info(Fun, module),
-  {name, Name} = erlang:fun_info(Fun, name),
-  {arity, Arity} = erlang:fun_info(Fun, arity),
-  erlang:md5(erlang:term_to_binary({Module, Name, Arity, Args})).
