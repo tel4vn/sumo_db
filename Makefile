@@ -34,3 +34,11 @@ test-shell: build-ct-suites app
 
 erldocs:
 	erldocs . -o docs
+
+quicktests: app build-ct-suites
+	@if [ -d "test" ] ; \
+	then \
+		mkdir -p logs/ ; \
+		$(CT_RUN) -suite $(addsuffix _SUITE,$(CT_SUITES)) $(CT_OPTS) ;	\
+	fi
+	$(gen_verbose) rm -f test/*.beam

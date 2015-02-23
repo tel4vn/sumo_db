@@ -211,7 +211,7 @@ where_clause(Exprs, EscapeFun, SlotFun) ->
 where_clause_internal([], _EscapeFun, _SlotFun) ->
   [];
 where_clause_internal(Exprs, EscapeFun, SlotFun) when is_list(Exprs) ->
-  Clauses = [where_clause(Expr, EscapeFun, SlotFun) || Expr <- Exprs],
+  Clauses = [where_clause_internal(Expr, EscapeFun, SlotFun) || Expr <- Exprs],
   ["(", interpose(" AND ", Clauses), ")"];
 where_clause_internal({'and', Exprs}, EscapeFun, SlotFun) ->
   where_clause_internal(Exprs, EscapeFun, SlotFun);
