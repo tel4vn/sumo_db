@@ -171,7 +171,7 @@ delete_by(DocName, Conditions, State) ->
       [ "DELETE FROM ",
         escape(DocName),
         " WHERE ",
-        lists:flatten(Clauses)
+        Clauses
       ]
     end,
   StatementName = prepare(DocName, PreStatementName, StatementFun),
@@ -255,7 +255,7 @@ find_by(DocName, Conditions, SortFields, Limit, Offset, State) ->
   WhereClause =
     case Conditions of
       [] -> "";
-      _  -> [" WHERE ", lists:flatten(Clauses)]
+      _  -> [" WHERE ", Clauses]
     end,
 
   PreName = list_to_atom("find_by_" ++ PreStatementName2),
@@ -279,7 +279,7 @@ find_by(DocName, Conditions, SortFields, Limit, Offset, State) ->
   ExecArgs =
     case Limit of
       0     -> Values;
-      Limit -> lists:flatten([Values | [Offset, Limit]])
+      Limit -> Values ++ [Offset, Limit]
     end,
 
   case execute(StatementName, ExecArgs, State) of

@@ -27,7 +27,7 @@ ERLC_OPTS += +warn_export_vars +warn_exported_vars +warn_missing_spec +warn_unty
 
 TEST_ERLC_OPTS += +'{parse_transform, lager_transform}'
 CT_SUITES = sumo_basic sumo_find sumo_config conditional_logic
-CT_OPTS = -s emysql -s sumo_db -erl_args -config test/test.config
+CT_OPTS = -cover test/sumo.coverspec -s emysql -s sumo_db -erl_args -config test/test.config
 
 test-shell: build-ct-suites app
 	erl -pa ebin -pa deps/*/ebin -pa test -s lager -s sync -config test/test.config
